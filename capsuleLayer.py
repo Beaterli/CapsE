@@ -1,5 +1,5 @@
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 epsilon = 1e-9
 
@@ -62,7 +62,7 @@ class CapsLayer(object):
                 conv1 = tf.nn.relu(tf.nn.bias_add(conv, b), name="relu")
                 conv1 = tf.squeeze(conv1, axis=1)
 
-                capsules =  tf.expand_dims(conv1, -1)
+                capsules = tf.expand_dims(conv1, -1)
                 capsules = squash(capsules)
 
                 return(capsules) #[batch_size, k, num_filters, 1]
@@ -70,13 +70,16 @@ class CapsLayer(object):
         if self.layer_type == 'FC':
             if self.with_routing:
                 # Reshape the input into [batch_size, k, 1, num_filters, 1]
-                self.input = tf.reshape(input, shape=(-1, input.shape[1].value,
-                                                      1, input.shape[-2].value, 1))
+                # input = tf.reshape(input, shape=(-1, input.shape[1].value, 1, input.shape[-2].value, 1))
+                self.input = tf.reshape(input, shape=(-1, input.shape[1], 1, input.shape[-2], 1))
 
                 with tf.variable_scope('routing'):
                     # b_IJ: [batch_size, num_caps_l, num_caps_l_plus_1, 1, 1],
                     # about the reason of using 'batch_size', see issue #21
-                    b_IJ = tf.constant(np.zeros([self.batch_size, input.shape[1].value, self.num_outputs_secondCaps, 1, 1], dtype=np.float32))
+                    # b_IJ = tf.constant(np.zeros([self.batch_size, input.shape[1].value, self.num_outputs_secondCaps, 1, 1], dtype=np.float32))
+                    b_IJ = tf.constant(
+                        np.zeros([self.batch_size, input.shape[1], self.num_outputs_secondCaps, 1, 1],
+                                 dtype=np.float32))
                     capsules = routing(self.input, b_IJ, batch_size=self.batch_size, iter_routing=self.iter_routing,
                                        num_caps_i=self.embedding_size, num_caps_j=self.num_outputs_secondCaps,
                                        len_u_i=self.num_filters, len_v_j=self.vec_len_secondCaps)

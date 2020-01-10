@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import numpy as np
 import os
 import time
@@ -45,6 +45,7 @@ print("Loading data...")
 train, valid, test, words_indexes, indexes_words, \
     headTailSelector, entity2id, id2entity, relation2id, id2relation = build_data(path=args.data, name=args.name)
 data_size = len(train)
+print("Data size: %d" % data_size)
 train_batch = Batch_Loader(train, words_indexes, indexes_words, headTailSelector, \
                            entity2id, id2entity, relation2id, id2relation, batch_size=args.batch_size, neg_ratio=args.neg_ratio)
 
@@ -58,6 +59,7 @@ y_test = np.array(list(test.values())).astype(np.float32)
 
 initialization = []
 
+# Using the pre-trained embeddings.
 print("Using initialization.")
 initialization = np.empty([len(words_indexes), args.embedding_dim]).astype(np.float32)
 initEnt, initRel = init_norm_Vector(args.data + args.name + '/relation2vec' + str(args.embedding_dim) + '.init',
@@ -136,7 +138,7 @@ with tf.Graph().as_default():
                 x_batch, y_batch = train_batch()
                 loss = train_step(x_batch, y_batch)
                 current_step = tf.train.global_step(sess, global_step)
-                #print(loss)
+                print("epoch:%d , batch_num:%d , loss:%f" % (epoch, batch_num, loss))
             if epoch > 0:
                 if epoch % args.savedEpochs == 0:
                     path = capse.saver.save(sess, checkpoint_prefix, global_step=epoch)
